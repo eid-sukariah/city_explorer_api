@@ -9,7 +9,7 @@ app.use(cors());
 
 app.get('/location',handleLocation);
 app.get('/weather', handleWether);
-// app.get('/',handleError);
+// app.get('*',handleError);
 
 function handleWether(req, res){
     const searchQuryCity = req.query.city ;
@@ -21,8 +21,18 @@ function handleWether(req, res){
         arr.push(newWeth)
     });
     res.send(arr);
-
 };
+
+app.use(errorHandler);
+
+function errorHandler(err, request, response, next) 
+{  response.status(500).send('something is wrong in server');}
+
+app.use('*', notFoundHandler); // 404 not found url
+
+function notFoundHandler(request, response) 
+{  response.status(404).send('requested API is Not Found!');}
+
 
 
 function handleLocation(req , res){
@@ -32,7 +42,6 @@ function handleLocation(req , res){
     let newLoc = new Location(searchQuryCity, locationS[0]);
     res.send(newLoc);
 }
-
 function Location (city, objLocation){
     this.search_query = city;
     this.formatted_query = objLocation.display_name;
