@@ -1,14 +1,14 @@
 'use strict';   // run js in strict mode
 const dotenv = require('dotenv');  //dotenv allows us to load envauroment variable 
+const express = require('express')  //loud express module to our script
+const superAgent = require('superagent');   //req rse for api 
+const pg = require('pg');   //load pg
+const cors =require('cors'); //load cors library allowes our server to accept APIs call from other domain 
 dotenv.config();
 
-const express = require('express')  //loud express module to our script
 let app = express();   //creat a new server
-
-const superAgent = require('superagent');   //req rse for api 
-const cors =require('cors'); //load cors library allowes our server to accept APIs call from other domain 
 app.use(cors());      // middleware
-const pg = require('pg');   //load pg
+
 const client = new pg.Client(process.env.DATABASE_URL)   //spicific the res from api
 // console.log(client);
 
@@ -16,6 +16,8 @@ const PORT = process.env.PORT || 3000   // get the port from .env
 const GEOCODE_API_KEY = process.env.GEOCODE_API_KEY
 const WEATHER_API_KEY = process.env.WEATHER_API_KEY
 const PARKS_API_KEY = process.env.PARKS_API_KEY
+const MOVIE_API_KEY = process.env.MOVIE_API_KEY
+const YELP_API_KEY = process.env.YELP_API_KEY
 
 //open our port
 client.connect().then(()=> app.listen(PORT,()=>{console.log(`i'm listen ${PORT}`);})) ;
@@ -24,6 +26,8 @@ client.connect().then(()=> app.listen(PORT,()=>{console.log(`i'm listen ${PORT}`
 app.get('/location',handleLocation);
 app.get('/weather', handleWether);
 app.get('/parks', handlePark);
+// app.get('/movies', handleMoves);
+// app.get('/yelp', handleYelp);
 app.get('*', notFoundHandler);
 
 
@@ -72,7 +76,7 @@ function handleLocation(req,res) {
    
 }
 
-  function handlePark(req, res){
+function handlePark(req, res){
       const search_query = req.query.city
       const url = `https://developer.nps.gov/api/v1/parks?parkCode=acad&api_key=${PARKS_API_KEY}`
       superAgent.get(url).then(parData => {
@@ -84,7 +88,14 @@ function handleLocation(req,res) {
         res.status(500).send(`something ${error}`);
       });
 }
-function notFoundHandler(request, response) {response.status(404).send('requested API is Not Found!');}
+function handleMoves(req, res){
+    const search = req.query.city;
+    const url = `https://api.themoviedb.org/3/movie/550?api_key=${MOVIE_API_KEY}&query=${search}`;
+
+    superAgent.get(url).then(data =>{
+        
+    })
+}
 
 
 function Location (city, objLocation){
@@ -93,18 +104,35 @@ function Location (city, objLocation){
     this.latitude = objLocation.lat;
     this.longitude = objLocation.lon;
 }
-
 function Wether (city, time){
     this.search_query = city;
     this.forecast = time.weather.description;
     this.time = time.datetime;
 }
-
-
 function Parks (data){
-  this.name = data.fullName;
-  this.address = Object.values(data.addresses[0]).join('-');
-  this.fee = data.entranceFees[0].cost;
-  this.description = data.description;
-  this.url = data.url;
+    this.name = data.fullName;
+    this.address = Object.values(data.addresses[0]).join('-');
+    this.fee = data.entranceFees[0].cost;
+    this.description = data.description;
+    this.url = data.url;
 }
+// function Movies(){
+//     this.title = title;
+//     this.overview = overview;
+//     this.average_votes = average_votes;
+//     this.total_votes = total_votes;
+//     this.image_url = image_url;
+//     this.popularity = popularity;
+//     this.released_on = released_on;
+// }
+// function Yelp(){
+//     this.name = name;
+//     this.image_url = image_url;
+//     this.price = price;
+//     this.rating = rating;
+//     this.url = url;
+// }
+
+
+function notFoundHandler(request, response) {response.status(404).send('requested API is Not Found!');}
+
