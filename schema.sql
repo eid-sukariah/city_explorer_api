@@ -5,9 +5,9 @@ latitude FLOAT,
 longitude FLOAT
 );
 
-DROP TABLE IF EXISTS weathers;
-CREATE TABLE weathers(
-    search_query VARCHAR(100),
-    forecast VARCHAR(100),
-    time DATE
-);
+-- DROP TABLE IF EXISTS weathers;
+-- CREATE TABLE weathers(
+--     search_query VARCHAR(100),
+--     forecast VARCHAR(100),
+--     time DATE
+-- );
