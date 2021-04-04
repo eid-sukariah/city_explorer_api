@@ -6,10 +6,14 @@ const pg = require('pg');   //load pg
 const cors =require('cors'); //load cors library allowes our server to accept APIs call from other domain 
 dotenv.config();
 
+const NODE_ENV = process.env.NODE_ENV;
+const options = NODE_ENV === 'production' ? { connectionString: DATABASE_URL, ssl: { rejectUnauthorized: false } } : { connectionString: DATABASE_URL };
+const client = new pg.Client(options);
+
 let app = express();   //creat a new server
 app.use(cors());      // middleware
 
-const client = new pg.Client(process.env.DATABASE_URL)   //spicific the res from api
+// const client = new pg.Client(process.env.DATABASE_URL)   //spicific the res from api
 // console.log(client);
 
 const PORT = process.env.PORT || 3000   // get the port from .env
@@ -26,8 +30,8 @@ client.connect().then(()=> app.listen(PORT,()=>{console.log(`i'm listen ${PORT}`
 app.get('/location',handleLocation);
 app.get('/weather', handleWether);
 app.get('/parks', handlePark);
-// app.get('/movies', handleMoves);
-// app.get('/yelp', handleYelp);
+app.get('/movies', handleMoves);
+app.get('/yelp', handleYelp);
 app.get('*', notFoundHandler);
 
 
@@ -39,7 +43,7 @@ function handleWether(req, res){
     const url = `https://api.weatherbit.io/v2.0/forecast/daily?city=${searchQuryCity}&key=${WEATHER_API_KEY}`
 
     superAgent.get(url).then(dataWeather => {   //send req 
-        console.log(dataWeather);
+        // console.log(dataWeather);
         let arr = dataWeather.body.data.map(element => new Wether(searchQuryCity, element))
         // console.log(dataWeather.text);
         res.send(arr);
@@ -92,10 +96,24 @@ function handleMoves(req, res){
     const search = req.query.city;
     const url = `https://api.themoviedb.org/3/movie/550?api_key=${MOVIE_API_KEY}&query=${search}`;
 
-    superAgent.get(url).then(data =>{
-        
-    })
+    superagent.get(url).then(mov => {
+      let arr = mov.body.results.map(movData => new Movies(movData));
+      res.status(200).send(arr);
+    }).catch((error) => {
+      res.status(500).send(`something ${error}`);
+    });
 }
+function handleYelp(req,res) {
+  const search_query = req.query.search_query;
+  const url = `https://api.yelp.com/v3/businesses/search?location=${search_query}&limit=50&api_key=${YELP_API_KEY}`;
+  superagent.get(url).then(res => {
+    let arr = res.body.businesses.map(reskData => new Yelp(reskData));
+    res.status(200).send(arr);
+  }).catch((error) => {
+    res.status(500).send(`something ${error}`);
+  });
+}
+
 
 
 function Location (city, objLocation){
@@ -116,22 +134,22 @@ function Parks (data){
     this.description = data.description;
     this.url = data.url;
 }
-// function Movies(){
-//     this.title = title;
-//     this.overview = overview;
-//     this.average_votes = average_votes;
-//     this.total_votes = total_votes;
-//     this.image_url = image_url;
-//     this.popularity = popularity;
-//     this.released_on = released_on;
-// }
-// function Yelp(){
-//     this.name = name;
-//     this.image_url = image_url;
-//     this.price = price;
-//     this.rating = rating;
-//     this.url = url;
-// }
+function Movies(){
+    this.title = title;
+    this.overview = overview;
+    this.average_votes = average_votes;
+    this.total_votes = total_votes;
+    this.image_url = image_url;
+    this.popularity = popularity;
+    this.released_on = released_on;
+}
+function Yelp(){
+    this.name = name;
+    this.image_url = image_url;
+    this.price = price;
+    this.rating = rating;
+    this.url = url;
+}
 
 
 function notFoundHandler(request, response) {response.status(404).send('requested API is Not Found!');}
